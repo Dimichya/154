@@ -1,0 +1,35 @@
+- repository: https://github.com/lampame/lampac-ukraine
+  branch: main
+  modules:
+    - AnimeON
+    - Anihub
+    - Unimay
+    - CikavaIdeya
+    - Uaflix
+    - UaTUT
+
+
+# branch и список папок в modules указывать не обязательно
+- repository: https://github.com/levende/lampac-modules
+
+
+########## private github ##########
+
+# Получить персональный токен доступа (PAT) GitHub можно прямо в настройках аккаунта: войдите в GitHub, откройте Settings → Developer settings → Personal access tokens, создайте новый токен (fine-grained или classic), отметьте нужные области доступа — для чтения приватного репозитория достаточно read-права на repo — и сохраните сгенерированное значение в надёжном месте. 
+# После этого добавьте его в конфигурацию Lampac: либо напрямую в module/repository.yaml, либо безопаснее — положите в переменную окружения (например, GITHUB_PAT) и укажите token: env:GITHUB_PAT и нужную схему (token или Bearer) в файле конфигурации.
+
+# Значение token можно задать напрямую или через переменную окружения (env:NAME).
+# token_type управляет схемой авторизации (token/Bearer/etc).
+# Вместо пары token/token_type можно указать готовый заголовок auth_header.
+- repository: https://github.com/example/private-modules
+  branch: main
+  token: env:GITHUB_PAT
+  token_type: Bearer
+  accept: application/vnd.github.raw
+  modules:
+    - Aladdin
+
+
+# Пример с явным заголовком Authorization
+- repository: git@github.com:example/more-modules.git
+  auth_header: token ghp_example1234567890

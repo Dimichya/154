@@ -1,0 +1,7 @@
+{
+  "enable": false,
+  "version": 3,
+  "namespace": "Durex",
+  "initspace": "ModInit",
+  "online": "OnlineApi"
+}

@@ -1,0 +1,25 @@
+{
+  "enable": false,
+  "version": 3,
+  "initspace": "HealthChecks.ModInit",
+  "references": [
+    "Telegram.Bot.dll"
+  ],
+
+  "telegram": {
+    "token": "",
+    "chat_id": ""
+  },
+
+  "interval": 60,
+  "checks": [
+    {
+      "uri": "http://127.0.0.1:9118/lite/events?id=1007734&imdb_id=tt28996126&kinopoisk_id=5905715&title=%D0%9D%D0%B8%D0%BA%D1%82%D0%BE%202&original_title=Nobody%202&serial=0&original_language=en&year=2025&clarification=0",
+      "ignore": [ "rutubemovie", "veoveo" ]
+    },
+    {
+      "uri": "http://127.0.0.1:9118/lite/events?id=119051&imdb_id=tt13443470&kinopoisk_id=4365427&title=%D0%A3%D1%8D%D0%BD%D0%B7%D0%B4%D0%B5%D0%B9&original_title=Wednesday&serial=1&original_language=en&year=2022&clarification=0",
+      "ignore": [ "getstv", "lumex" ]
+    }
+  ]
+}

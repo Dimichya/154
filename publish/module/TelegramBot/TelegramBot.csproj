@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <OutputType>library</OutputType>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <Reference Include="Shared">
+	  <HintPath>..\..\runtimes\references\Shared.dll</HintPath>
+    </Reference>
+    <Reference Include="Telegram.Bot">
+      <HintPath>..\references\Telegram.Bot.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

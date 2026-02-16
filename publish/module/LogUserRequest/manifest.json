@@ -1,0 +1,12 @@
+{
+  "enable": false,
+  "version": 3,
+  "namespace": "LogUserRequest",
+  "initspace": "ModInit",
+  "middlewares": "Middlewares",
+
+
+  "logDay": 30,
+  "only_authorized": true,
+  "apiKey": "MegaChlen"
+}

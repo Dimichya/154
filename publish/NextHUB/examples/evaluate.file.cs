@@ -1,0 +1,1 @@
+return file + "#.m3u8";

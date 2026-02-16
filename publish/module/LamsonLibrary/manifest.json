@@ -1,0 +1,26 @@
+{
+  "enable": false,
+  "index": 1,
+  "version": 3,
+  
+  // предварительно скомпилированный module/Lamson
+  // зависимости .dll можно добавить в module/references
+  "dll": "Lamson.dll",
+  
+  "namespace": "Lamson",
+  "initspace": "ModInit",
+  "online": "OnlineApi",
+  "sisi": "SisiApi",
+  "middlewares": "Middlewares",
+  "initialization": "InitializationApi",
+  "jac": [
+    {
+      "enable": true,
+      "namespace": "Lamson.Latracker"
+    },
+    {
+      "enable": false,
+      "namespace": "Lamson.BigTracker"
+    }
+  ]
+}

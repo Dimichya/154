@@ -1,0 +1,54 @@
+"Rezka": {
+   "host": "https://cors.apn.monster/https://hdrezka.ag",
+   "apn": "https://apn.watch",
+   "geostreamproxy": ["UA"]
+}
+
+
+######## или #############
+
+{
+   "corsehost": "https://cors.apn.monster",
+   "Rezka": {
+      "corseu": true,
+      "apn": "https://apn.watch",
+      "geostreamproxy": ["UA"]
+   },
+   "VideoDB": {
+      "corseu": true,
+      "apn": "https://apn.watch",
+      "geostreamproxy": ["UA", "RU"]
+   }
+}
+
+
+
+######## или #############
+
+{
+   "Rezka": {
+      "host": "https://cors.apn.monster/https://hdrezka.ag",
+      "apn": "https://apn.watch",
+      "geostreamproxy": ["UA"] // Если на VPS
+   },
+   "VideoDB": {
+      "apn": "https://apn.watch",
+      "streamproxy": true // Если в локалке, либо есть необходимость включить для всех
+   }
+}
+
+
+######## или #############
+
+
+{
+   "apn": "https://apn.watch",
+   "Kodik": {
+      "apnstream": true,
+      "streamproxy": true
+   },
+   "VideoDB": {
+      "apnstream": true,
+      "geostreamproxy": ["UA"]
+	}
+}

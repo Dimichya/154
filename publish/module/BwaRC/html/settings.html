@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <title>Редактор настроек</title>
+   </head>
+   <body>
+      <style type="text/css">
+         * {
+			 box-sizing: border-box;
+			 outline: none;
+			 margin: 0;
+			 padding: 0;
+		}
+		 body {
+			 padding: 20px;
+			 font-family: sans-serif;
+			 background-color: #fafafa;
+			 color: #ffffff;
+			 min-height: 100vh;
+		}
+		 @media (min-width: 768px) {
+			 body {
+				 padding: 40px;
+			}
+		}
+		 .container {
+			 max-width: 1200px;
+			 margin: 0 auto;
+			 width: 100%;
+		}
+		 label {
+			 display: block;
+			 font-weight: 600;
+			 margin-bottom: 8px;
+			 color: #585454;
+			 font-size: 19px;
+		}
+		 input, textarea, select {
+			 width: 100%;
+			 padding: 12px;
+			 background-color: #fdfdfd;
+			 border: 1px solid #dbdbdb;
+			 color: #4e4b4b;
+			 border-radius: 4px;
+			 font-size: 16px;
+		}
+		 textarea:focus, input:focus {
+			 border-color: #4CAF50;
+		}
+		 button {
+			 padding: 12px 24px;
+			 background-color: #8bc34a;
+			 color: white;
+			 border: none;
+			 border-radius: 4px;
+			 cursor: pointer;
+			 font-size: 16px;
+			 transition: background-color 0.3s;
+		}
+		 button:hover {
+			 background-color: #45a049;
+			 color: #fff 
+		}
+		 form > * + * {
+			 margin-top: 30px;
+		}
+		 .share {
+			 font-size: 24px;
+			 margin-bottom: 40px;
+		}
+		 .share a {
+			 color: #64B5F6;
+			 text-decoration: none;
+			 margin: 0 5px;
+			 transition: color 0.3s;
+		}
+		 .share a:hover {
+			 color: #90CAF9;
+		}
+		 @media (max-width: 480px) {
+			 .share {
+				 font-size: 18px;
+			}
+			 textarea {
+				 height: 300px;
+			}
+		}
+      </style>
+      <div class="container">
+		  <div class="share" style="color: #999;">
+			  <label>Нажмите на нужный сервис, чтобы привязать свой аккаунт</label>
+			  <a href="/bind/filmix?user_id={user_id}">Filmix</a> * <a href="/bind/kinopub?user_id={user_id}">KinoPub</a> * <a href="/bind/rezka?user_id={user_id}">HDRezka</a> * <a href="/bind/vokino?user_id={user_id}">VoKino</a> * <a href="/bind/getstv?user_id={user_id}">GetsTV</a> * <a href="/bind/iptvonline?user_id={user_id}">iptv.online</a>
+		  </div>
+         <form method="post" action="" id="form">
+            <div style="margin-top: 75px;">
+               <label>Ручная настройка</label>
+               <textarea id="value" name="value" rows="30">{conf}</textarea>
+            </div>
+            <button type="submit">Сохранить</button>
+         </form>
+      </div>
+      <script type="text/javascript">
+         document.getElementById('form').addEventListener("submit", (e) => {
+         	let json = document.getElementById('value').value
+         
+         	e.preventDefault()
+         
+         	try{
+         		JSON.parse(json)
+         
+         		let formData = new FormData()
+         			formData.append('json', json)
+         
+         		fetch('/kit?user_id={user_id}',{
+         		    method: "POST",
+         		    body: formData
+         		})
+         		.then((response)=>{
+         			if(response.ok) return response.text();  
+         
+         			throw new Error('Не удалось сохранить настройки');
+         		 })  
+         		.then(()=>{
+         			alert('Сохранено')
+         		})
+         		.catch((e)=>{
+         			alert(e.message)
+         		})
+         	}
+         	catch(e){
+         		alert('Ошибка: ' + e.message)
+         	}
+         })
+      </script>
+   </body>
+</html>

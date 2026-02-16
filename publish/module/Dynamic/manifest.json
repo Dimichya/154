@@ -1,0 +1,8 @@
+{
+  "enable": false,
+  "dynamic": true,
+  "version": 3,
+  "namespace": "Dynamic",
+  "initspace": "ModInit",
+  "middlewares": "Middlewares"
+}

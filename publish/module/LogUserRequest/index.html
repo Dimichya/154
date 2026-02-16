@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LogUserRequest</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            margin: 0;
+            color: #222;
+        }
+
+        .container {
+            width: 95vw;
+            max-width: 95vw;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(30,60,114,0.15);
+            padding: 32px;
+            box-sizing: border-box;
+        }
+
+        .auth {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+            .auth input {
+                padding: 12px;
+                border-radius: 8px;
+                border: 1px solid #ccc;
+                font-size: 1rem;
+            }
+
+            .auth button {
+                padding: 12px;
+                border-radius: 8px;
+                border: none;
+                background: #2a5298;
+                color: #fff;
+                font-size: 1rem;
+                font-weight: 700;
+                cursor: pointer;
+                transition: background 0.2s;
+            }
+
+                .auth button:hover {
+                    background: #1e3c72;
+                }
+
+        .error {
+            color: #d32f2f;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .user-list {
+            margin-top: 16px;
+            overflow-y: auto;
+        }
+
+        .user-card {
+            background: #f5f7fa;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(30,60,114,0.07);
+            padding: 18px 24px;
+            margin-bottom: 18px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+            .user-info div {
+                margin-bottom: 6px;
+            }
+
+            .user-info .uri {
+                word-break: break-all;
+                overflow-wrap: anywhere;
+            }
+
+        .icon {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            cursor: pointer;
+            font-size: 1.3rem;
+            color: #2a5298;
+            transition: color 0.2s;
+        }
+
+            .icon:hover {
+                color: #1e3c72;
+            }
+
+        .headers-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(30,60,114,0.25);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .headers-content {
+            background: #fff;
+            border-radius: 16px;
+            padding: 28px;
+            max-width: 950px;
+            width: 125vw;
+            max-height: 125vh;
+            box-shadow: 0 8px 32px rgba(30,60,114,0.18);
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        .close-btn {
+            background: #2a5298;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            cursor: pointer;
+            align-self: flex-end;
+        }
+
+        #headersData {
+            flex: 1;
+            overflow: auto;
+            width: 100%;
+            font-size: 1rem;
+            background: #f5f7fa;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 12px;
+            box-sizing: border-box;
+            max-height: 83vh;
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                max-width: 98vw;
+                padding: 12px;
+            }
+
+            .headers-content {
+                max-width: 98vw;
+                width: 98vw;
+                padding: 12px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                max-width: 100vw;
+                width: 100vw;
+                padding: 6px;
+            }
+
+            .user-info {
+                grid-template-columns: 1fr;
+            }
+
+            .headers-content {
+                max-width: 100vw;
+                width: 100vw;
+                padding: 6px;
+            }
+
+            #headersData {
+                padding: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="statsBlock" style="width:95vw;max-width:95vw;margin:32px auto 32px auto;padding:20px;background:#f5f7fa;border-radius:12px;box-shadow:0 2px 8px rgba(30,60,114,0.07);font-size:1.1rem;display:none;box-sizing:border-box;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-weight:700;font-size:1.1em;">Статистика</div>
+            <button id="toggleStatsBtn" style="background:#2a5298;color:#fff;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;">Развернуть</button>
+        </div>
+        <div id="statsContent" style="display:none;">Загрузка статистики...</div>
+    </div>
+    <div class="container">
+        <div class="auth" id="authForm">
+            <input type="text" id="apikey" placeholder="Введите ваш API Key" autocomplete="off">
+            <button onclick="login()">Войти</button>
+        </div>
+        <div class="error" id="errorMsg" style="display:none;"></div>
+        <div class="user-uid-form" id="userUidForm" style="display:none; margin-bottom:24px;">
+            <input type="text" id="uidInput" placeholder="UID пользователя" style="padding:10px;border-radius:8px;border:1px solid #ccc;font-size:1rem;width:220px;">
+            <button onclick="showUserByUid()" style="padding:10px 18px;border-radius:8px;border:none;background:#2a5298;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;margin-left:8px;">Показать</button>
+        </div>
+        <div class="user-list" id="userList" style="display:none;">
+            <!-- Пользователи будут добавляться сюда -->
+            <div id="userListSentinel"></div>
+        </div>
+    </div>
+    <div class="headers-modal" id="headersModal">
+        <div class="headers-content">
+            <button class="close-btn" onclick="closeHeaders()">Закрыть</button>
+            <pre id="headersData" style="white-space:pre-wrap;"></pre>
+        </div>
+    </div>
+    <script>
+        let apikey = '';
+        let skip = 0;
+        const take = 200;
+        let loading = false;
+        let allLoaded = false;
+        let usersData = [];
+        let observer;
+        let currentUid = '';
+        let uidSkip = 0;
+
+        function setCookie(name, value, days) {
+            let expires = '';
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = '; expires=' + date.toUTCString();
+            }
+            document.cookie = name + '=' + encodeURIComponent(value) + expires + '; path=/';
+        }
+        function getCookie(name) {
+            const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return match ? decodeURIComponent(match[2]) : '';
+        }
+        function login() {
+            apikey = document.getElementById('apikey').value.trim();
+            if (!apikey) {
+                showError('Введите API Key');
+                return;
+            }
+            skip = 0;
+            uidSkip = 0;
+            currentUid = '';
+            usersData = [];
+            allLoaded = false;
+            fetch(`/logrequest/api?apikey=${encodeURIComponent(apikey)}&skip=${skip}&take=${take}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data && data.error) {
+                        showError(data.error);
+                        return;
+                    }
+                    setCookie('loguser_apikey', apikey, 30);
+                    document.getElementById('authForm').style.display = 'none';
+                    document.getElementById('errorMsg').style.display = 'none';
+                    document.getElementById('userUidForm').style.display = 'block';
+                    skip += data.length;
+                    usersData = data;
+                    allLoaded = data.length < take;
+                    loadStats();
+                    renderUsers(usersData, true);
+                    attachIntersectionObserver();
+                })
+                .catch(e => {
+                    showError(e.message);
+                });
+        }
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedKey = getCookie('loguser_apikey');
+            if (savedKey) {
+                document.getElementById('apikey').value = savedKey;
+                login();
+            }
+            const statsBlock = document.getElementById('statsBlock');
+            const statsContent = document.getElementById('statsContent');
+            const toggleBtn = document.getElementById('toggleStatsBtn');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    if (statsContent.style.display === 'none') {
+                        statsContent.style.display = 'block';
+                        toggleBtn.innerText = 'Свернуть';
+                    } else {
+                        statsContent.style.display = 'none';
+                        toggleBtn.innerText = 'Развернуть';
+                    }
+                });
+            }
+        });
+        function showError(msg) {
+            document.getElementById('errorMsg').innerText = msg;
+            document.getElementById('errorMsg').style.display = 'block';
+        }
+        function renderUsers(users, reset = false) {
+            const list = document.getElementById('userList');
+            let sentinel = document.getElementById('userListSentinel');
+            if (reset) {
+                list.innerHTML = '';
+                sentinel = document.createElement('div');
+                sentinel.id = 'userListSentinel';
+                list.appendChild(sentinel);
+                // Отрисовываем все элементы из usersData
+                usersData.forEach(u => {
+                    const card = document.createElement('div');
+                    card.className = 'user-card';
+                    const country = u.country || u.Country || '';
+                    card.innerHTML = `
+                        <div class="user-info">
+                            <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:6px;align-items:center;">
+                                <span>${new Date(u.time).toLocaleString()}</span>
+                                <span style="font-size:1.2em;color:#2a5298;">•</span>
+                                <span><a href="/reqinfo?uid=${u.user_uid}" target="_blank" style="color:#2a5298;text-decoration:underline;">${u.user_uid}</a></span>
+                                <span style="font-size:1.2em;color:#2a5298;">•</span>
+                                <span>${u.ip}${country ? ' (' + country + ')' : ''}</span>
+                            </div>
+                            <div class="uri"><b>URI:</b> ${u.uri}</div>
+                            <div><b>UserAgent:</b> ${u.userAgent}</div>
+                        </div>
+                        <span class="icon" title="Показать заголовки" onclick='showHeaders(${JSON.stringify(u.headers)})'>🛈</span>
+                    `;
+                    list.insertBefore(card, sentinel);
+                });
+            } else {
+                // Добавляем только новые карточки
+                users.forEach(u => {
+                    const card = document.createElement('div');
+                    card.className = 'user-card';
+                    const country = u.country || u.Country || '';
+                    card.innerHTML = `
+                        <div class="user-info">
+                            <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:6px;align-items:center;">
+                                <span>${new Date(u.time).toLocaleString()}</span>
+                                <span style="font-size:1.2em;color:#2a5298;">•</span>
+                                <span><a href="/reqinfo?uid=${u.user_uid}" target="_blank" style="color:#2a5298;text-decoration:underline;">${u.user_uid}</a></span>
+                                <span style="font-size:1.2em;color:#2a5298;">•</span>
+                                <span>${u.ip}${country ? ' (' + country + ')' : ''}</span>
+                            </div>
+                            <div class="uri"><b>URI:</b> ${u.uri}</div>
+                            <div><b>UserAgent:</b> ${u.userAgent}</div>
+                        </div>
+                        <span class="icon" title="Показать заголовки" onclick='showHeaders(${JSON.stringify(u.headers)})'>🛈</span>
+                    `;
+                    list.insertBefore(card, sentinel);
+                });
+            }
+            list.style.display = 'block';
+        }
+        function attachIntersectionObserver() {
+            if (observer) observer.disconnect();
+            const sentinel = document.getElementById('userListSentinel');
+            observer = new IntersectionObserver(entries => {
+                if (entries[0].isIntersecting && !loading && !allLoaded) {
+                    loading = true;
+                    fetchMoreUsers();
+                }
+            }, { root: null, rootMargin: '0px', threshold: 1.0 });
+            observer.observe(sentinel);
+        }
+        function fetchMoreUsers() {
+            if (currentUid) {
+                fetch(`/logrequest/api?apikey=${encodeURIComponent(apikey)}&uid=${encodeURIComponent(currentUid)}&skip=${uidSkip}&take=${take}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data && data.error) {
+                            showError(data.error);
+                            return;
+                        }
+                        if (Array.isArray(data) && data.length > 0) {
+                            usersData = usersData.concat(data);
+                            const list = document.getElementById('userList');
+                            const sentinel = document.getElementById('userListSentinel');
+                            data.forEach(u => {
+                                const card = document.createElement('div');
+                                card.className = 'user-card';
+                                const country = u.country || u.Country || '';
+                                card.innerHTML = `
+                                    <div class="user-info">
+                                        <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:6px;align-items:center;">
+                                            <span>${new Date(u.time).toLocaleString()}</span>
+                                            <span style="font-size:1.2em;color:#2a5298;">•</span>
+                                            <span><a href="/reqinfo?uid=${u.user_uid}" target="_blank" style="color:#2a5298;text-decoration:underline;">${u.user_uid}</a></span>
+                                            <span style="font-size:1.2em;color:#2a5298;">•</span>
+                                            <span>${u.ip}${country ? ' (' + country + ')' : ''}</span>
+                                        </div>
+                                        <div class="uri"><b>URI:</b> ${u.uri}</div>
+                                        <div><b>UserAgent:</b> ${u.userAgent}</div>
+                                    </div>
+                                    <span class="icon" title="Показать заголовки" onclick='showHeaders(${JSON.stringify(u.headers)})'>🛈</span>
+                                `;
+                                list.insertBefore(card, sentinel);
+                            });
+                            uidSkip += data.length;
+                            if (data.length < take) allLoaded = true;
+                        } else {
+                            allLoaded = true;
+                        }
+                        loading = false;
+                    })
+                    .catch(e => {
+                        showError(e.message);
+                        loading = false;
+                    });
+            } else {
+                fetch(`/logrequest/api?apikey=${encodeURIComponent(apikey)}&skip=${skip}&take=${take}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data && data.error) {
+                            showError(data.error);
+                            return;
+                        }
+                        if (Array.isArray(data) && data.length > 0) {
+                            usersData = usersData.concat(data);
+                            const list = document.getElementById('userList');
+                            const sentinel = document.getElementById('userListSentinel');
+                            data.forEach(u => {
+                                const card = document.createElement('div');
+                                card.className = 'user-card';
+                                const country = u.country || u.Country || '';
+                                card.innerHTML = `
+                                    <div class="user-info">
+                                        <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:6px;align-items:center;">
+                                            <span>${new Date(u.time).toLocaleString()}</span>
+                                            <span style="font-size:1.2em;color:#2a5298;">•</span>
+                                            <span><a href="/reqinfo?uid=${u.user_uid}" target="_blank" style="color:#2a5298;text-decoration:underline;">${u.user_uid}</a></span>
+                                            <span style="font-size:1.2em;color:#2a5298;">•</span>
+                                            <span>${u.ip}${country ? ' (' + country + ')' : ''}</span>
+                                        </div>
+                                        <div class="uri"><b>URI:</b> ${u.uri}</div>
+                                        <div><b>UserAgent:</b> ${u.userAgent}</div>
+                                    </div>
+                                    <span class="icon" title="Показать заголовки" onclick='showHeaders(${JSON.stringify(u.headers)})'>🛈</span>
+                                `;
+                                list.insertBefore(card, sentinel);
+                            });
+                            skip += data.length;
+                            if (data.length < take) allLoaded = true;
+                        } else {
+                            allLoaded = true;
+                        }
+                        loading = false;
+                    })
+                    .catch(e => {
+                        showError(e.message);
+                        loading = false;
+                    });
+            }
+        }
+        function showHeaders(headers) {
+            document.getElementById('headersData').innerText = JSON.stringify(headers, null, 2);
+            document.getElementById('headersModal').style.display = 'flex';
+        }
+        function closeHeaders() {
+            document.getElementById('headersModal').style.display = 'none';
+        }
+        function showUserByUid() {
+            const uid = document.getElementById('uidInput').value.trim();
+            if (!uid) return;
+            currentUid = uid;
+            uidSkip = 0;
+            usersData = [];
+            allLoaded = false;
+            fetch(`/logrequest/api?apikey=${encodeURIComponent(apikey)}&uid=${encodeURIComponent(uid)}&skip=${uidSkip}&take=${take}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data && data.error) {
+                        showError(data.error);
+                        return;
+                    }
+                    loadStats(uid);
+                    usersData = Array.isArray(data) ? data : [data];
+                    uidSkip += usersData.length;
+                    allLoaded = usersData.length < take;
+                    renderUsers(usersData, true);
+                    attachIntersectionObserver();
+                })
+                .catch(e => {
+                    showError(e.message);
+                });
+        }
+        function loadStats(uid = '') {
+            const url = `/logrequest/stats?apikey=${encodeURIComponent(apikey)}${uid ? `&uid=${encodeURIComponent(uid)}` : ''}`;
+            fetch(url)
+                .then(r => r.json())
+                .then(stats => {
+                    if (stats && stats.error) {
+                        document.getElementById('statsBlock').style.display = 'block';
+                        document.getElementById('statsContent').innerText = stats.error;
+                        return;
+                    }
+                    let topUsersHtml = '';
+                    if (Array.isArray(stats.topUsers) && stats.topUsers.length > 0) {
+                        topUsersHtml = `<div style='margin-top:18px;font-weight:700;'>Топ пользователей (за месяц):</div><ol style='margin-left:18px;'>` +
+                            stats.topUsers.map(u => `<li><b>${u.uid}</b>: ${u.count}</li>`).join('') + '</ol>';
+                    }
+                    let topBalancersHtml = '';
+                    if (Array.isArray(stats.topBalancers) && stats.topBalancers.length > 0) {
+                        topBalancersHtml = `<div style='margin-top:18px;font-weight:700;'>Топ балансеров (за месяц):</div><ol style='margin-left:18px;'>` +
+                            stats.topBalancers.map(b => `<li><b>${b.balancer}</b>: ${b.count}</li>`).join('') + '</ol>';
+                    }
+                    document.getElementById('statsBlock').style.display = 'block';
+                    document.getElementById('statsContent').innerHTML = `
+                        <div style="font-size:1.08em;margin-bottom:18px;">Запросов сегодня: <b>${stats.today || 0}</b></div>
+                        <div style="font-weight:700;margin-bottom:6px;margin-top:18px;">За месяц</div>
+                        <div style="margin-left:18px;">запросов: <b>${stats.month || 0}</b></div>
+                        <div style="margin-left:18px;">устройств: <b>${stats.uniqueUserAgent || 0}</b></div>
+                        <div style="margin-left:18px;">IP: <b>${stats.uniqueIp || 0}</b></div>
+                        ${topUsersHtml}
+                        ${topBalancersHtml}
+                    `;
+                })
+                .catch(e => {
+                    document.getElementById('statsBlock').style.display = 'block';
+                    document.getElementById('statsContent').innerText = e.message;
+                });
+        }
+    </script>
+</body>
+</html>

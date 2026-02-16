@@ -1,0 +1,6 @@
+{
+  "enable": false,
+  "version": 3,
+  "namespace": "WebSocket",
+  "initspace": "ModInit"
+}

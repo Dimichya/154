@@ -1,0 +1,21 @@
+{
+  "enable": false,
+  "index": 1,
+  "version": 3,
+  "namespace": "Lamson",
+  "initspace": "ModInit",
+  "online": "OnlineApi",
+  "sisi": "SisiApi",
+  "middlewares": "Middlewares",
+  "initialization": "InitializationApi",
+  "jac": [
+    {
+      "enable": true,
+      "namespace": "Lamson.Latracker"
+    },
+    {
+      "enable": false,
+      "namespace": "Lamson.BigTracker"
+    }
+  ]
+}

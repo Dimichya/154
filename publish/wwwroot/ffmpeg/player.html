@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <title>ffmpeg.wasm — HLS (m3u8 + fMP4)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body{margin:0;padding:16px;background:#111;color:#eee;font-family:sans-serif}
+    video{width:100%;max-height:70vh;background:#000;margin-top:10px}
+    pre{white-space:pre-wrap;background:#1b1b1b;padding:8px;border-radius:6px}
+    button{padding:10px 18px;margin:8px 0;font-size:16px;cursor:pointer;border-radius:6px;border:none;background:#2d8cff;color:#fff;}
+    button:disabled{background:#444;cursor:wait;}
+  </style>
+
+  <!-- Локальная UMD-сборка ffmpeg (вся папка dist/umd, чтобы подтянулись чанки воркера) -->
+  <script src="/ffmpeg/ffmpeg.js"></script>
+  <!-- hls.js для воспроизведения HLS -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.6/dist/hls.min.js"></script>
+</head>
+<body>
+  <h1>ffmpeg.wasm → HLS (copy video + AAC)</h1>
+  <button id="startBtn">▶️ Старт</button>
+  <pre id="log"></pre>
+  <video id="player" controls playsinline></video>
+
+<script>
+(function(){
+  const SRC = "https://nl205.cdnsqu.com/s/FHFuaMttJgGHujYp2vg41lLkFBQUFBRVhxTjBFUlJCUVZ3L0EwNFJBaw.gycGn98Ti5x3jEzqgR2t6Bu0ZWOL4QRMOM95Bg/Fallout-USA-24-DublRHS/s01e01_1080.mp4";
+  const LOG = document.getElementById('log');
+  const BTN = document.getElementById('startBtn');
+  const VIDEO = document.getElementById('player');
+
+  function log(){ const s=[].slice.call(arguments).join(" "); console.log(s); LOG.textContent += s+"\n"; }
+  
+  function fetchFilePartial(url, maxBytes) {
+  return fetch(url, {
+    mode: 'cors',
+    headers: { 'Range': 'bytes=0-' + (maxBytes - 1) }
+  })
+  .then(res => {
+    if (!res.ok && res.status !== 206)
+      throw new Error("HTTP " + res.status + " (partial fetch failed)");
+    return res.arrayBuffer();
+  })
+  .then(buf => new Uint8Array(buf));
+}
+
+  function toBlobURL(url, mime){
+    return fetch(url, { mode:'cors' })
+      .then(r=>{ if(!r.ok) throw new Error("HTTP "+r.status+" "+url); return r.blob(); })
+      .then(b=>URL.createObjectURL(new Blob([b], {type:mime})));
+  }
+  function fetchFile(url){
+    return fetch(url, { mode:'cors' })
+      .then(r=>{ if(!r.ok) throw new Error("HTTP "+r.status+" "+url); return r.arrayBuffer(); })
+      .then(buf=>new Uint8Array(buf));
+  }
+  function getFFClass(){
+    const g = window.FFmpeg || window.ffmpeg || window.FFmpegWASM;
+    return g ? (g.FFmpeg || g.default || null) : null;
+  }
+
+  async function runFFmpeg(){
+    BTN.disabled = true;
+    try{
+      // ждём UMD
+      let FFClass=null, tries=50;
+      while(tries-- > 0 && !(FFClass=getFFClass())) await new Promise(r=>setTimeout(r,100));
+      if(!FFClass) throw new Error("FFmpeg UMD не найден (проверь /ffmpeg/ffmpeg.js и соседние чанки)");
+
+      const ffmpeg = new FFClass();
+      ffmpeg.on('log', e=>e && e.message && log(e.message));
+
+      // ядро тянем с unpkg и оборачиваем в blob:
+      const CORE="/ffmpeg";
+      log("Step 1: ffmpeg.load() …");
+      const coreURL = await toBlobURL(CORE + "/ffmpeg-core.js", "text/javascript");
+      const wasmURL = await toBlobURL(CORE + "/ffmpeg-core.wasm", "application/wasm");
+      await ffmpeg.load({ coreURL, wasmURL });
+      log("✅ core loaded");
+
+      // входной файл
+      log("Step 2: fetch input …", SRC);
+	  const sizeMb = 40;
+      const data = await fetchFilePartial(SRC, sizeMb * 1024 * 1024);
+      log("✅ input bytes:", data.length);
+      await ffmpeg.writeFile("in.mkv", data);
+
+      // HLS-транскод (как ты просил)
+      log("Step 3: transcode → HLS …");
+      await ffmpeg.exec([
+        "-threads","0",
+        "-fflags","+genpts",
+        "-i","in.mkv",
+        "-avoid_negative_ts","disabled",
+        "-sn",
+        "-map","0:v:0",
+        "-map","0:a:0",
+        "-dn","-sn",
+        "-map_metadata","-1",
+        "-map_chapters","-1",
+        "-max_muxing_queue_size","2048",
+        "-c:v","copy",
+        "-c:a","aac",
+        "-ac","2",
+        "-b:a","192k",
+        "-profile:a","aac_low",
+        "-f","hls",
+        "-max_delay","5000000",
+        "-hls_segment_type","fmp4",
+        "-hls_time","6",
+        "-hls_list_size","100",
+        "-master_pl_name","index.m3u8",
+        "-hls_fmp4_init_filename","init.mp4",
+        "-hls_segment_filename","seg_%05d.m4s",
+        "-y","index.m3u8"
+      ]);
+      log("✅ HLS done");
+
+      // утилиты чтения файлов
+      async function readText(path){
+        const u8 = await ffmpeg.readFile(path);
+        return new TextDecoder().decode(u8);
+      }
+      function blobURLFromU8(u8, type){ return URL.createObjectURL(new Blob([u8.buffer], {type})); }
+
+      // соберём все созданные файлы
+      const files = await ffmpeg.listDir("/");
+      const byName = {};
+      for (const f of files) byName[f.name] = f;
+
+      if (!byName["index.m3u8"]) throw new Error("index.m3u8 не найден");
+
+      const m3u = await readText("index.m3u8");
+      const isMaster = /#EXT-X-STREAM-INF/i.test(m3u);
+
+      // создаём blob для всех бинарников сегментов и init.mp4
+      const segURL = {};
+      for (const f of files) {
+        if (f.name === "init.mp4" || /\.m4s$/i.test(f.name)) {
+          const bin = await ffmpeg.readFile(f.name);
+          segURL[f.name] = blobURLFromU8(bin, "video/mp4");
+        }
+      }
+
+      function rewritePlaylist(text){
+        let out = text;
+        // EXT-X-MAP:URI="init.mp4"
+        if (segURL["init.mp4"]) {
+          out = out.replace(/URI="init\.mp4"/g, 'URI="'+segURL["init.mp4"]+'"');
+        }
+        // сегменты seg_00001.m4s и т.п.
+        out = out.replace(/(^|\n)(seg_\d+\.m4s)/g, function(_, pre, name){
+          return pre + (segURL[name] || name);
+        });
+        return out;
+      }
+
+      let playableURL = null;
+
+      if (isMaster) {
+        // найти строки с путями к медиаплейлистам в мастере
+        const mediaRefs = [];
+        const lines = m3u.split(/\r?\n/);
+        for (let i=0;i<lines.length;i++){
+          if (/^#EXT-X-STREAM-INF/i.test(lines[i]) && i+1 < lines.length) {
+            mediaRefs.push(lines[i+1].trim());
+          }
+        }
+        // переписать каждый медиаплейлист и сделать на него blob-URL
+        const mediaBlobURLs = {};
+        for (const ref of mediaRefs) {
+          if (!byName[ref]) throw new Error("Медиаплейлист не найден в FS: " + ref);
+          const txt = await readText(ref);
+          const rewritten = rewritePlaylist(txt);
+          const blob = new Blob([rewritten], {type:"application/vnd.apple.mpegurl"});
+          mediaBlobURLs[ref] = URL.createObjectURL(blob);
+        }
+        // переписать мастер, чтобы он указывал на blob-URL медиаплейлистов
+        let masterOut = m3u;
+        for (const ref of mediaRefs) {
+          masterOut = masterOut.replace(new RegExp("(^|\\n)"+ref+"(\\r?\\n|$)","g"), function(_, pre, suf){
+            return pre + mediaBlobURLs[ref] + "\n";
+          });
+        }
+        const masterBlob = new Blob([masterOut], {type:"application/vnd.apple.mpegurl"});
+        playableURL = URL.createObjectURL(masterBlob);
+      } else {
+        // обычный медиаплейлист
+        const rewritten = rewritePlaylist(m3u);
+        const blob = new Blob([rewritten], {type:"application/vnd.apple.mpegurl"});
+        playableURL = URL.createObjectURL(blob);
+      }
+
+      log("✅ playlist ready:", playableURL);
+
+      // пускаем в плеер
+      if (Hls.isSupported()) {
+        const hls = new Hls({ enableWorker: true, lowLatencyMode: false });
+        hls.on(Hls.Events.ERROR, (_, data)=>{ log("hls.js ERROR:", data && (data.details||data.type)||data); });
+        hls.loadSource(playableURL);
+        hls.attachMedia(VIDEO);
+        hls.on(Hls.Events.MANIFEST_PARSED, ()=>VIDEO.play().catch(()=>{}));
+      } else if (VIDEO.canPlayType('application/vnd.apple.mpegurl')) {
+        VIDEO.src = playableURL;
+        try { await VIDEO.play(); } catch(e){}
+      } else {
+        log("❌ HLS не поддерживается в этом браузере");
+      }
+    }catch(err){
+      log("❌ ERROR:", (err && err.message) || String(err));
+    }finally{
+      BTN.disabled = false;
+    }
+  }
+
+  BTN.addEventListener('click', runFFmpeg);
+})();
+</script>
+</body>
+</html>

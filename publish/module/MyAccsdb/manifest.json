@@ -1,0 +1,5 @@
+{
+  "enable": false,
+  "version": 1,
+  "middlewares": "MyAccsdb.Middlewares"
+}

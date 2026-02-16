@@ -1,0 +1,6 @@
+{
+  "enable": false,
+  "version": 1,
+  "initspace": "Kinogram.ModInit",
+  "online": "Kinogram.OnlineApi"
+}

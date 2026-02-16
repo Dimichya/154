@@ -1,0 +1,26 @@
+////////////////////
+// Формат данных меняете в FileDB.cs в зависимости от ваших потребностей
+///////////////////
+
+
+// Простой доступ через идентификатор
+// id - описание
+ufbfgl               // lampac_unic_id
+big-dick@gmail.com   // через авторизацию cub.red
+randomsymbol         // пароль, token 
+randomsymbol2        // пароль2, token2
+
+
+// AccsUser в формате json
+{"id":"small-dick@gmail.com","ids":["unic_id2","unic_id3"],"expires":"2035-02-15T00:00:00+02:00","group":0,"ban":false,"ban_msg":null,"comment":null,"params":{"adult":true,"registration":"2025-02-15T15:40:08.896233+02:00","etc":1,"iptv":["m3u8-1","m3u8-3"]}}
+
+// AccsUser в формате json
+{"id":"jsdjasjjh","expires":"2035-02-15T00:00:00+02:00","group":1}
+
+// Ваш собственный формат json
+{"token":"41fcbc35cdf40809a2d8cfbdaf91d7139279f5df747fb9d35783b25b32e8b2aa","access":true}
+
+// Каждый пользователь == 1 линия
+{"id":"uid5","expires":"2035-02-15T00:00:00+02:00","group":1}
+{"id":"uid6","expires":"2035-02-15T00:00:00+02:00","group":2}
+{"id":"uid7","expires":"2035-02-15T00:00:00+02:00","ban":true,"ban_msg":"пидор"}

@@ -1,0 +1,165 @@
+LoadKitInit: |
+  // BaseSettings defaultinit, BaseSettings init, JObject userconf, RequestModel requestInfo, HybridCache hybridCache
+  init.streamproxy = true;
+
+LoadKit: |
+  // BaseSettings defaultinit, BaseSettings init, JObject userconf, RequestModel requestInfo, HybridCache hybridCache
+  if (requestInfo.user == null || requestInfo.user.group == 0)
+    init.vast = new VastConf("http://vast.com/reklama.xml", "Спонсор рекламы: Якорь мне в жопу");
+
+
+Controller:
+  BadInitialization: |
+    // BaseSettings init, bool? rch, RequestModel requestInfo, string host, HttpRequest request, HttpContext httpContext, HybridCache hybridCache
+    if (requestInfo.user == null || requestInfo.user.group == 0)
+      init.vast = new VastConf("http://vast.com/reklama.xml", "Спонсор рекламы: Якорь мне в жопу");
+      
+    if (init.plugin is "Alloha" or "FilmixPartner")
+      return new JsonResult(new { accsdb = true, msg = "Дай денег!!!" });
+      
+    string bv = await Http.Get("https://rc.bwa.to/version");
+    Console.WriteLine($"bwa version: {bv}");
+    
+    return default;
+  Externalids: |
+    // string id, string imdb_id, string kinopoisk_id, int serial
+    if (id == "911430" && serial == 0)
+      return ("tt16311594", "5003510");
+    return default;
+  MyLocalIp: |
+    // RequestModel requestInfo, HttpRequest request, HttpContext httpContext, HybridCache hybridCache
+    var myip = await Http.Get<JObject>("https://ipinfo.io/json");
+    if (myip == null || string.IsNullOrWhiteSpace(myip.Value<string>("ip")))
+        return null;
+    return myip.Value<string>("ip");
+  HttpHeaders: |
+    // string site, List<HeadersModel> headers, RequestModel requestInfo, HttpRequest request, HttpContext httpContext
+    if (site.Contains("rutube.ru"))
+        headers.Add(new HeadersModel("x-token", "gaf"));
+    return headers;
+  HostStreamProxy: |
+    // BaseSettings conf, string uri, List<HeadersModel> headers, WebProxy proxy, RequestModel requestInfo, HttpContext httpContext, HybridCache hybridCache
+    conf.streamproxy = true;
+    return "http://stream-proxy.io/" + uri;
+# string source, string token, string arg, string host, RequestModel requestInfo, HttpRequest request, HybridCache hybridCache
+  AppReplace:
+    online:
+      list:
+        "addSourceSearch('Anime', 'spider/anime');": ""
+        "Поиск на ({balanser}) не дал результатов": "Поиск не дал результатов"
+      regex:
+        "var button =[^\n\r]+": "file:events/mybutton.html"
+      eval: |
+        return source.Replace("lampac_unic_id", "prisma_unic_id");
+    sisi:
+      list:
+        Клубничка: Ягодка
+        '["{localhost}/signalr-6.0.25_es5.js"]': '["https://prismacdn.com/signalr-6.0.25_es5.js"]'
+        "'sisi_view_' + Defined.use_api": "'sisi_view_prisma'"
+    appjs:
+      regex:
+        "app_version: '[^']+'": "app_version: '6.6.6'"
+    appcss:
+      list:
+        "../img/welcome.jpg": "/my/welcome.jpg"
+
+
+Middleware:
+# RequestModel requestInfo, HttpRequest request, HttpContext httpContext, HybridCache hybridCache, IMemoryCache memoryCache
+  first: |
+    if (Regex.IsMatch(request.Path.Value, "^/ts(/?)$") && request.Query["uid"] != "patrik") {
+      httpContext.Response.StatusCode = 401;
+      await httpContext.Response.WriteAsync("squiddy?");
+      return false;
+    }
+    return true;
+  end: |
+    if (request.Path.Value.StartsWith("/dlna") && requestInfo.user?.group != 666) {
+      httpContext.Response.StatusCode = 403;
+      return false;
+    }
+    return true;
+
+
+Http:
+  Handler: |
+    // string url, HttpClientHandler handler, WebProxy proxy, CookieContainer cookieContainer, IMemoryCache memoryCache
+    handler.UseProxy = url.Contains("xhamster.com");
+    handler.Proxy = new WebProxy("http://127.0.0.1:5625", false, null, new NetworkCredential("login", "password"));
+  Headers: |
+    // string url, HttpRequestMessage client, string cookie, string referer, List<HeadersModel> headers, bool useDefaultHeaders, IMemoryCache memoryCache
+    if (url.Contains("rt.pornhub.com"))
+      client.Headers.TryAddWithoutValidation("apikey", "sisi");
+  Response: |
+    //string url, HttpContent data, HttpClient client, string result, HttpResponseMessage response, IMemoryCache memoryCache
+    Console.WriteLine($"{url} / {(int)response.StatusCode}")
+
+
+HybridCache:
+# string key, string value, DateTimeOffset ex
+  Read: |
+    Console.WriteLine("Read: " + key);
+    return default;
+  Write: |
+    Console.WriteLine("Write: " + key);
+    if (key.Contains("kinobase:view:"))
+      return (value,  DateTimeOffset.Now.AddHours(5));
+    
+    return default;
+
+
+RedApi:
+  AddTorrents: |
+    return torrent.updateTime.AddDays(1) > DateTime.Now;
+
+PidTor: |
+  // PidTorSettings init, RequestModel requestInfo, HybridCache hybridCache
+  if (requestInfo.user_uid == "rutub")
+    init.enable = false;
+
+
+StreamQualityTpl: |
+  // string link, string quality, bool prepend
+  if (Regex.IsMatch(link, "(cdnsqu.com|werkecdn.me)") && (quality is "2160p" or "1440p" or "1080p"))
+    return (true, "https://video-server.com/vip.mp4");
+  
+  return default;
+
+StreamQualityFirts: |
+  // IReadOnlyList<(string link, string quality)> data
+  return data.First(i => !i.link.Contains("/vip.mp4"));
+
+
+ProxyApi:
+  CreateHttpRequest: |
+    // string plugin, HttpRequest request, List<HeadersModel> headers, Uri uri, bool ismedia, HttpRequestMessage requestMessage
+    Console.WriteLine($"{plugin} / {uri.AbsoluteUri}");
+  CacheStream: |
+    // HttpContext httpContext, ProxyLinkModel decryptLink
+    if (decryptLink.plugin == "PornHub")
+      return (decryptLink.uri.Split("?")[0], "video/MP2T");
+    return default;
+
+ProxyImg:
+  Md5Key: |
+    // HttpContext httpContext, RequestModel requestInfo, ProxyLinkModel decryptLink, string href, int width, int height
+    if (decryptLink.plugin == "PornHub") {
+      string uriKey = Regex.Replace(href.Split("?")[0], "^https?://[^/]+", "");
+      return $"{decryptLink.plugin}:{uriKey}:{width}:{height}";
+    }
+    return default;
+
+
+Transcoding:
+  CreateProcess: |
+    // Collection<string> args, TranscodingStartContext context
+    Console.WriteLine(string.Join(" ", args));
+
+
+Corseu:
+  Execute: |
+    // CorseuRequest request
+  HttpRequest: |
+    // string method, string url, HttpRequestMessage request
+  PlaywrightRequest: |
+    // string method, string url, APIRequestNewContextOptions contextOptions, APIRequestContextOptions requestOptions

@@ -1,0 +1,57 @@
+[
+  {
+	"enable": true,
+	"dll": "SISI.dll"
+  },
+  {
+	"enable": true,
+	"dll": "Online.dll"
+  },
+  {
+	"enable": true,
+	"initspace": "Jackett.ModInit",
+	"dll": "JacRed.dll"
+  },
+  {
+	"enable": true,
+	"dll": "DLNA.dll"
+  },
+  {
+	"enable": true,
+	"initspace": "Tracks.ModInit",
+	"dll": "Tracks.dll"
+  },
+  {
+	"enable": true,
+	"initspace": "TorrServer.ModInit",
+	"dll": "TorrServer.dll"
+  },
+  {
+	"enable": false,
+	"dll": "Merchant.dll"
+  },
+  {
+	"enable": false,
+	"dll": "Lamson.dll",
+	"initspace": "Lamson.ModInit",
+	"middlewares": "Lamson.Middlewares",
+	"online": "Lamson.OnlineApi",
+	"sisi": "Lamson.SisiApi",
+	"jac": [
+	  {
+        "enable": true,
+        "namespace": "Lamson.Latracker"
+      },
+	  {
+        "enable": false,
+        "namespace": "Lamson.BigTracker"
+      }
+    ]
+  },
+  {
+    "enable": false,
+    "dll": "Kinogram",
+    "initspace": "Lamson.ModInit",
+    "online": "Lamson.OnlineApi"
+  }
+]

@@ -1,0 +1,48 @@
+[
+  {
+    "id": "small-dick@gmail.com",
+    "ids": [
+      "unic_id2",
+      "unic_id3"
+    ],
+    "expires": "2035-02-15T00:00:00+02:00",
+    "group": 0,
+    "ban": false,
+    "ban_msg": null,
+    "comment": null,
+    "params": {
+      "adult": true,
+      "registration": "2025-02-15T15:40:08.896233+02:00",
+      "etc": 1,
+      "iptv": [
+        "m3u8-1",
+        "m3u8-3"
+      ]
+    }
+  },
+  {
+    "id": "big-dick@gmail.com", // email cub.red
+    "expires": "2035-02-15T00:00:00+02:00"
+  },
+  {
+    "id": "lampac_unic_id-5", // uid
+    "expires": "2035-02-15T00:00:00+02:00",
+    "group": 1
+  },
+  {
+    "id": "lampac_unic_id-6", // uid
+    "expires": "2035-02-15T00:00:00+02:00",
+    "group": 1
+  },
+  {
+    "id": "admin-vhodit", // пароль
+    "expires": "2035-02-15T00:00:00+02:00",
+    "group": 2
+  },
+  {
+    "id": "41fcbc35cdf40809a2d8cfbdaf91d7139279f5df747fb9d35783b25b32e8b2aa", // токен
+    "expires": "2035-02-15T00:00:00+02:00",
+    "ban": true,
+    "ban_msg": "пидор"
+  }
+]
